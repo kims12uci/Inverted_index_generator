@@ -64,6 +64,8 @@ class IndexerM1:
         print(f"Number of tokens: {self.num_tok}")
         print(f"Number of documents: {self.doc_num}")
 
+        for tok in self.index.keys():
+            self.index[tok] = [len(self.index[tok]), self.index[tok]] #{token: [frequency in number of docs, {doc_id: [frequency of token in doc, [index of occurrence]]}]}
         with open("hash_url.json", "w") as outfile:
             json.dump(self.hash_url, outfile, indent=2)
 
@@ -74,8 +76,6 @@ class IndexerM1:
     def run(self):
         for file in self.get_files():
             self.create_index(self.read_file(file))
-            if self.doc_num == 10:
-                break
         self.finish()
 
 if __name__ == '__main__':
