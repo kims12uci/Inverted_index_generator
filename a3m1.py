@@ -68,12 +68,14 @@ class IndexerM1:
             json.dump(self.hash_url, outfile, indent=2)
 
         with open("index.json", "w") as outfile:
-            json.dump(self.index, outfile, indent=2)
+            json.dump({i: self.index[i] for i in sorted(self.index.keys())}, outfile, indent=2)
 
 
     def run(self):
         for file in self.get_files():
             self.create_index(self.read_file(file))
+            if self.doc_num == 10:
+                break
         self.finish()
 
 if __name__ == '__main__':
