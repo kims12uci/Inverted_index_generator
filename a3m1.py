@@ -2,6 +2,7 @@ import os
 import json
 from bs4 import BeautifulSoup
 from lxml import html
+from urllib.parse import urlparse
 
 class IndexerM1:
     def __init__(self, seed):
@@ -18,6 +19,11 @@ class IndexerM1:
             data = json.load(f)
             content = data["content"]
             url = data['url']
+
+        url = urlparse(url)._replace(fragment="").geturl()
+        if url in self.hash_url.values():
+            return None
+
         soup = BeautifulSoup(content, 'lxml')
         content = soup.get_text()
         if len(content) < 200:
