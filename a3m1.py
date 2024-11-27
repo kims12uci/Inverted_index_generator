@@ -3,6 +3,8 @@ import json
 from bs4 import BeautifulSoup
 from lxml import html
 from urllib.parse import urlparse
+import math
+from nltk.stem import PorterStemmer
 
 class IndexerM1:
     def __init__(self, seed):
@@ -28,6 +30,8 @@ class IndexerM1:
         content = soup.get_text()
         if len(content) < 200:
             return None
+
+        ps = PorterStemmer()
         pos = 0
         for line in content.splitlines():
             try:
@@ -39,6 +43,7 @@ class IndexerM1:
             for words in line.split(' '):
                 if words != "":
                     words = words.lower()
+                    words = ps.stem(words)
                     if words not in tok:
                         tok[words] = []
                     tok[words].append(pos)
@@ -63,7 +68,7 @@ class IndexerM1:
         for tok in tok_l[1].keys():
             if tok not in self.index:
                 self.index[tok] = {}
-            self.index[tok][tok_l[0]] = [len(tok_l[1][tok]), tok_l[1][tok]] #{doc_id: [frequency, [index of occurrence]]}
+            self.index[tok][tok_l[0]] = [1 + math.log(len(tok_l[1][tok]), 10), tok_l[1][tok]] #{doc_id: [tf, [index of occurrence]]}
 
     def finish(self):
         self.num_tok = len(self.index)
@@ -71,7 +76,8 @@ class IndexerM1:
         print(f"Number of documents: {self.doc_num}")
 
         for tok in self.index.keys():
-            self.index[tok] = [len(self.index[tok]), self.index[tok]] #{token: [frequency in number of docs, {doc_id: [frequency of token in doc, [index of occurrence]]}]}
+            self.index[tok] = [len(self.index[tok]), self.index[tok], math.log(self.doc_num/len(self.index[tok]), 10)] #{token: [number of docs for the token, {doc_id: [tf, [index of occurrence]]}, idf]}
+
         with open("hash_url.json", "w") as outfile:
             json.dump(self.hash_url, outfile, indent=2)
 
@@ -85,4 +91,11 @@ class IndexerM1:
         self.finish()
 
 if __name__ == '__main__':
-    IndexerM1('./analyst/').run()
+    seed = input("Please enter directory path to start. Default = ./analyst/\n")
+    try:
+        if seed:
+            IndexerM1(seed).run()
+        else:
+            IndexerM1('./analyst/').run()
+    except Exception as e:
+        print(e)
